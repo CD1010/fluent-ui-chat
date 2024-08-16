@@ -8,6 +8,8 @@ I adjusted a few styles manually to get it to use the whole browser.
 
 - Node.js and npm installed on your machine.
 
+## Steps
+
 Load the folder in VS Code
 
 Includes a server under server folder:
@@ -15,6 +17,7 @@ Includes a server under server folder:
 To run the node socket.io server:
   cd server
   node server.js
+  The server wll listen on port 4010.
 
 In root folder:
   npm start
