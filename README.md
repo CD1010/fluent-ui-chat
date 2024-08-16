@@ -1,4 +1,4 @@
-# A mostly Chat-GPT generated chat bot.
+# A mostly Chat-GPT generated chat app
 
 This was built using create-react-app.
 Chat GPT wrote the server and client chat UI.  
