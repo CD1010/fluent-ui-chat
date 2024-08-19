@@ -1,3 +1,7 @@
+![image](https://github.com/user-attachments/assets/7923a823-1f9f-42c2-b050-8fc6496cea38)
+
+
+
 ## Chat Application Installation Instructions
 This guide will help you set up and run the chat application on your local machine.
 
