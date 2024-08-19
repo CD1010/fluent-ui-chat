@@ -59,15 +59,29 @@ io.on("connection", (socket) => {
     db.run(
       `INSERT INTO messages (topic, sender, text, timestamp) VALUES (?, ?, ?, ?)`,
       [topic, sender, text, timestamp],
-      (err) => {
+      function (err) {
         if (err) {
           console.error("Error saving message:", err.message);
         } else {
+          // Include the message ID in the response
+          message.id = this.lastID;
           // Broadcast the message to all clients
           io.emit("receiveMessage", message);
         }
       }
     );
+  });
+
+  // Handle message deletion
+  socket.on("deleteMessage", (id) => {
+    db.run(`DELETE FROM messages WHERE id = ?`, id, (err) => {
+      if (err) {
+        console.error("Error deleting message:", err.message);
+      } else {
+        // Broadcast the deletion to all clients
+        io.emit("messageDeleted", id);
+      }
+    });
   });
 
   socket.on("disconnect", () => {

@@ -5,6 +5,7 @@ import {
   Stack,
   Persona,
   PersonaSize,
+  IconButton,
   initializeIcons,
 } from "@fluentui/react";
 import io from "socket.io-client";
@@ -41,10 +42,22 @@ const ChatInterface = ({ topic = "General" }) => {
       }));
     });
 
+    // Handle message deletion
+    socket.on("messageDeleted", (id) => {
+      setAllMessages((prevMessages) => {
+        const updatedMessages = { ...prevMessages };
+        updatedMessages[topic] = updatedMessages[topic].filter(
+          (msg) => msg.id !== id
+        );
+        return updatedMessages;
+      });
+    });
+
     // Cleanup on component unmount
     return () => {
       socket.off("previousMessages");
       socket.off("receiveMessage");
+      socket.off("messageDeleted");
     };
   }, [topic]);
 
@@ -54,7 +67,7 @@ const ChatInterface = ({ topic = "General" }) => {
         sender: "You",
         text: newMessage,
         topic: topic,
-        timestamp: new Date(),
+        timestamp: new Date().toISOString(),
       };
 
       // Send the message to the server
@@ -63,6 +76,11 @@ const ChatInterface = ({ topic = "General" }) => {
       // Clear the input field after sending the message
       setNewMessage("");
     }
+  };
+
+  const handleDeleteMessage = (id) => {
+    // Send delete request to the server
+    socket.emit("deleteMessage", id);
   };
 
   return (
@@ -94,6 +112,12 @@ const ChatInterface = ({ topic = "General" }) => {
             key={index}
             style={{ marginBottom: 10 }}
           >
+            <IconButton
+              iconProps={{ iconName: "Delete" }}
+              title="Delete"
+              ariaLabel="Delete"
+              onClick={() => handleDeleteMessage(message.id)}
+            />
             <Persona
               imageUrl={
                 message.avatarUrl || "https://example.com/your-avatar.png"
