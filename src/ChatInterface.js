@@ -13,36 +13,51 @@ import io from "socket.io-client";
 initializeIcons();
 
 const socket = io("http://localhost:4010", {
-  transports: ["websocket", "polling"], // Ensure compatibility with various transports
-  reconnectionAttempts: 5, // Limit reconnection attempts
+  transports: ["websocket", "polling"],
+  reconnectionAttempts: 5,
 });
 
-const ChatInterface = () => {
-  const [messages, setMessages] = useState([]);
+const ChatInterface = ({ topic = "General" }) => {
+  const [allMessages, setAllMessages] = useState({});
   const [newMessage, setNewMessage] = useState("");
 
   useEffect(() => {
-    // Listen for incoming messages from the WebSocket server
+    // Join the selected topic
+    socket.emit("joinTopic", topic);
+
+    // Handle incoming previous messages for the selected topic
+    socket.on("previousMessages", ({ topic, messages }) => {
+      setAllMessages((prevMessages) => ({
+        ...prevMessages,
+        [topic]: messages,
+      }));
+    });
+
+    // Handle incoming new messages
     socket.on("receiveMessage", (message) => {
-      setMessages((prevMessages) => [...prevMessages, message]);
+      setAllMessages((prevMessages) => ({
+        ...prevMessages,
+        [message.topic]: [...(prevMessages[message.topic] || []), message],
+      }));
     });
 
     // Cleanup on component unmount
     return () => {
+      socket.off("previousMessages");
       socket.off("receiveMessage");
     };
-  }, []);
+  }, [topic]);
 
   const handleSendMessage = () => {
     if (newMessage.trim() !== "") {
       const messageObj = {
-        id: messages.length + 1,
-        text: newMessage,
         sender: "You",
-        avatarUrl: "https://example.com/your-avatar.png", // Replace with actual avatar URL
+        text: newMessage,
+        topic: topic,
+        timestamp: new Date(),
       };
 
-      // Send the message to the WebSocket server
+      // Send the message to the server
       socket.emit("sendMessage", messageObj);
 
       // Clear the input field after sending the message
@@ -62,7 +77,7 @@ const ChatInterface = () => {
         },
       }}
     >
-      <h2>Chat</h2>
+      <h3>Conversation for {topic}</h3>
       <Stack
         style={{
           flexGrow: 1,
@@ -72,15 +87,17 @@ const ChatInterface = () => {
           borderRadius: 4,
         }}
       >
-        {messages.map((message) => (
+        {(allMessages[topic] || []).map((message, index) => (
           <Stack
             horizontal
             tokens={{ childrenGap: 10 }}
-            key={message.id}
+            key={index}
             style={{ marginBottom: 10 }}
           >
             <Persona
-              imageUrl={message.avatarUrl}
+              imageUrl={
+                message.avatarUrl || "https://example.com/your-avatar.png"
+              }
               text={message.sender}
               size={PersonaSize.size32}
               hidePersonaDetails={true}

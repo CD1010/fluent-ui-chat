@@ -1,32 +1,81 @@
 const express = require("express");
 const http = require("http");
 const socketIo = require("socket.io");
-const cors = require("cors"); // Import the cors middleware
+const sqlite3 = require("sqlite3").verbose();
+const cors = require("cors");
 
+// Initialize Express and http server
 const app = express();
-app.use(cors()); // Enable CORS for all requests
-
 const server = http.createServer(app);
 
+// Initialize Socket.io
 const io = socketIo(server, {
   cors: {
-    origin: "http://localhost:3000", // Allow your React app to connect
+    origin: "http://localhost:3000",
     methods: ["GET", "POST"],
     credentials: true,
   },
 });
 
-io.on("connection", (socket) => {
-  console.log("New client connected");
+// Initialize SQLite database
+const db = new sqlite3.Database("./chatapp.db", (err) => {
+  if (err) {
+    console.error("Error opening database:", err.message);
+  } else {
+    console.log("Connected to the SQLite database.");
 
+    // Create messages table if it doesn't exist
+    db.run(`CREATE TABLE IF NOT EXISTS messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      topic TEXT,
+      sender TEXT,
+      text TEXT,
+      timestamp TEXT
+    )`);
+  }
+});
+
+io.on("connection", (socket) => {
+  console.log("New client connected:", socket.id);
+
+  // Retrieve previous messages when a user joins a topic
+  socket.on("joinTopic", (topic) => {
+    db.all(
+      `SELECT * FROM messages WHERE topic = ? ORDER BY timestamp`,
+      [topic],
+      (err, rows) => {
+        if (err) {
+          console.error("Error retrieving messages:", err.message);
+          return;
+        }
+        socket.emit("previousMessages", { topic, messages: rows });
+      }
+    );
+  });
+
+  // Listen for new chat messages
   socket.on("sendMessage", (message) => {
-    console.log("Received message:", message);
-    io.emit("receiveMessage", message);
+    const { topic, sender, text, timestamp } = message;
+    db.run(
+      `INSERT INTO messages (topic, sender, text, timestamp) VALUES (?, ?, ?, ?)`,
+      [topic, sender, text, timestamp],
+      (err) => {
+        if (err) {
+          console.error("Error saving message:", err.message);
+        } else {
+          // Broadcast the message to all clients
+          io.emit("receiveMessage", message);
+        }
+      }
+    );
   });
 
   socket.on("disconnect", () => {
-    console.log("Client disconnected");
+    console.log("Client disconnected:", socket.id);
   });
 });
 
-server.listen(4010, () => console.log("Server running on port 4010"));
+// Start the server
+server.listen(4010, () => {
+  console.log("Server is running on port 4010");
+});
