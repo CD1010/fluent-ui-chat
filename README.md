@@ -7,9 +7,9 @@ Before you begin, ensure you have the following installed:
 Node.js (version 12 or later)
 npm (comes with Node.js)
 SQLite3 
-Step 1: Clone the Repository
-If you have Git installed, clone the repository to your local machine:
 
+# Step 1: Clone the Repository
+If you have Git installed, clone the repository to your local machine:
 
 
 ## Step 2: Install Server Dependencies
@@ -18,7 +18,7 @@ Navigate to the server directory and install the necessary dependencies:
 # Server
 
 cd server
-npm install
+npm install sqlite3
 
 # Step 3: Set Up the SQLite Database
 The SQLite database will be automatically set up when the server runs. The database file (chatapp.db) will be created in the server directory.
