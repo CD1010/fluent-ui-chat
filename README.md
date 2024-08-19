@@ -6,6 +6,7 @@
 This guide will help you set up and run the chat application on your local machine.
 
 # Prerequisites
+
 Before you begin, ensure you have the following installed:
 
 Node.js (version 12 or later)
@@ -22,6 +23,7 @@ Navigate to the server directory and install the necessary dependencies:
 # Server
 
 cd server
+
 npm install 
 
 # Step 3: Set Up the SQLite Database
